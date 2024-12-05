@@ -69,6 +69,44 @@ public class HttpClient {
         });
     }
 
+    public String getRequest(String endpoint) throws IOException {
+        long startTime = System.currentTimeMillis();
+        URL url = new URL(host + endpoint);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Accept", "application/json");
+
+        int responseCode = conn.getResponseCode();
+        StringBuilder response = new StringBuilder();
+
+        // Lesen der Antwort
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                response.append(line);
+            }
+        }
+
+        logRequest("GET", endpoint, null, responseCode, response.toString(), System.currentTimeMillis() - startTime);
+        updateStatistics(responseCode);
+
+        conn.disconnect();
+        return response.toString();
+    }
+
+    public void getRequestAsync(String endpoint, Callback callback) {
+        executor.submit(() -> {
+            try {
+                String response = getRequest(endpoint);
+                callback.onSuccess(response);
+            } catch (IOException e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+
+
     public void postRequestStreaming(String endpoint, String jsonPayload, Consumer<String> onPartialResponse, Consumer<Exception> onError) {
         executor.submit(() -> {
             long startTime = System.currentTimeMillis();
