@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 public class HttpClient {
 
@@ -50,7 +51,7 @@ public class HttpClient {
             }
         }
 
-        logRequest("POST", endpoint, responseCode, response.toString(), System.currentTimeMillis() - startTime);
+        logRequest("POST", endpoint, jsonPayload,responseCode, response.toString(), System.currentTimeMillis() - startTime);
         updateStatistics(responseCode);
 
         conn.disconnect();
@@ -67,6 +68,42 @@ public class HttpClient {
             }
         });
     }
+
+    public void postRequestStreaming(String endpoint, String jsonPayload, Consumer<String> onPartialResponse, Consumer<Exception> onError) {
+        executor.submit(() -> {
+            long startTime = System.currentTimeMillis();
+            try {
+                URL url = new URL(host + endpoint);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json; utf-8");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setDoOutput(true);
+
+                // Senden des JSON-Payloads
+                try (OutputStream os = conn.getOutputStream()) {
+                    byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
+
+                // Lesen des Streams
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        onPartialResponse.accept(line); // Rückgabe der Teilantwort
+                    }
+                }
+
+                int responseCode = conn.getResponseCode();
+                logRequest("POST (Streaming)", endpoint, jsonPayload, responseCode, "Streaming response", System.currentTimeMillis() - startTime);
+                updateStatistics(responseCode);
+
+            } catch (Exception e) {
+                onError.accept(e); // Fehler weitergeben
+            }
+        });
+    }
+
 
     public List<RequestLog> getLogs() {
         return new ArrayList<>(logs);
@@ -88,11 +125,11 @@ public class HttpClient {
         return totalRequests == 0 ? 0 : (double) successfulRequests / totalRequests * 100;
     }
 
-    private synchronized void logRequest(String method, String endpoint, int responseCode, String response, long duration) {
+    private synchronized void logRequest(String method, String endpoint, String request, int responseCode, String response, long duration) {
         if (logs.size() == 20) {
             logs.remove(0); // FIFO: Entferne die älteste Anfrage
         }
-        logs.add(new RequestLog(method, endpoint, responseCode, response, duration));
+        logs.add(new RequestLog(method, endpoint, request,responseCode, response, duration));
     }
 
     private synchronized void updateStatistics(int responseCode) {
@@ -101,28 +138,6 @@ public class HttpClient {
             successfulRequests++;
         } else {
             failedRequests++;
-        }
-    }
-
-    public static class RequestLog {
-        private final String method;
-        private final String endpoint;
-        private final int responseCode;
-        private final String response;
-        private final long duration;
-
-        public RequestLog(String method, String endpoint, int responseCode, String response, long duration) {
-            this.method = method;
-            this.endpoint = endpoint;
-            this.responseCode = responseCode;
-            this.response = response;
-            this.duration = duration;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("Method: %s, Endpoint: %s, ResponseCode: %d, Duration: %dms, Response: %s",
-                    method, endpoint, responseCode, duration, response);
         }
     }
 
