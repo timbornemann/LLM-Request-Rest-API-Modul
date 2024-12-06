@@ -1,0 +1,3 @@
+curl GET http://localhost:9191/llm/api/ping 
+
+curl -X POST http://localhost:9191/llm/api/generateResponseNonStreaming -d '{"prompt": "Hello, AI!"}'

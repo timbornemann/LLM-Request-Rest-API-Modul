@@ -1,3 +1,5 @@
+package LlmClient;
+
 public class RequestLog {
     private final String method;
     private final String endpoint;

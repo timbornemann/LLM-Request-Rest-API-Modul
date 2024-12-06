@@ -1,3 +1,5 @@
+package LlmClient;
+
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -6,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
-class LanguageModelClient {
+public class LanguageModelClient {
 
     private final HttpClient httpClient;
     private Model model;

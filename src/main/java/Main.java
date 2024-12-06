@@ -1,11 +1,18 @@
+import Server.RestApiServer;
+
 import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
 
-        LanguageModelClient client = new LanguageModelClient();
-
+      //  LlmClient.LanguageModelClient client = new LlmClient.LanguageModelClient();
+        try {
+            RestApiServer server = new RestApiServer();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 /*
+
         //list models
         try {
          for(String e : client.listModels()){
@@ -18,7 +25,7 @@ public class Main {
 /*
         //list running models
         try {
-            for(LanguageModelClient.Model m : client.listRunningModels()){
+            for(LlmClient.LanguageModelClient.Model m : client.listRunningModels()){
                 System.out.println(m.getModelName());
             }
         } catch (IOException e) {
@@ -28,7 +35,7 @@ public class Main {
         /*
         //load model
         try {
-           client.loadModel(LanguageModelClient.Model.LLAMA3_2_3B);
+           client.loadModel(LlmClient.LanguageModelClient.Model.LLAMA3_2_3B);
         } catch (IOException e) {
             e.printStackTrace();
         }
