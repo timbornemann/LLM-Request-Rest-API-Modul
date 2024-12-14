@@ -11,12 +11,15 @@ import java.util.function.Consumer;
 public class LanguageModelClient {
 
     private final HttpClient httpClient;
+    private String serverUrl;
+    private final String OllamaServerURL = "http://209.38.252.155:11434";
     private Model model;
 
     public enum Model {
         TINY_LLAMA("tinyllama"),
-        LLAMA3_1("llama3.1"),
+        LLAMA3_1("llama3.1:8b"),
         LLAMA3_2_3B("llama3.2:3b"),
+        LLAMA2_UNCENSORED("llama2-uncensored:7b"),
         MOONDREAM("moondream");
 
         private final String modelName;
@@ -36,18 +39,21 @@ public class LanguageModelClient {
     }
 
     public LanguageModelClient(Model model) {
-        this.httpClient = new HttpClient("http://161.35.192.50:11434");
+        serverUrl = OllamaServerURL;
+        this.httpClient = new HttpClient(serverUrl);
         setModel(model);
     }
 
     public LanguageModelClient() {
-        this.httpClient = new HttpClient("http://161.35.192.50:11434");
+        serverUrl = OllamaServerURL;
+        this.httpClient = new HttpClient(serverUrl);
         setModel(Model.LLAMA3_2_3B);
 
     }
 
-    public void setHost(String host) {
-        httpClient.setHost(host);
+    public void setServerUrl(String url) {
+        serverUrl = url;
+        httpClient.setHost(serverUrl);
     }
 
     public void setModel(Model model) {
@@ -82,17 +88,6 @@ public class LanguageModelClient {
             throw new IOException("Die API-Antwort enthält kein 'response'-Feld: " + response);
         }
 
-        return jsonResponse.getString("response");
-    }
-
-    public String generateResponse(String prompt, boolean stream) throws IOException {
-        String payload = String.format(
-                "{\"model\": \"%s\", \"prompt\": \"%s\", \"stream\": %b}",
-                model.getModelName(), prompt, stream
-        );
-
-        String response = httpClient.postRequest("/api/generate", payload);
-        JSONObject jsonResponse = new JSONObject(response);
         return jsonResponse.getString("response");
     }
 
