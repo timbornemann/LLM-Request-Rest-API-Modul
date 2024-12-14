@@ -107,8 +107,6 @@ public class HttpClient {
         });
     }
 
-
-
     public void postRequestStreaming(String endpoint, String jsonPayload, Consumer<String> onPartialResponse, Consumer<Exception> onError) {
         executor.submit(() -> {
             long startTime = System.currentTimeMillis();
@@ -143,7 +141,6 @@ public class HttpClient {
             }
         });
     }
-
 
     public List<RequestLog> getLogs() {
         return new ArrayList<>(logs);

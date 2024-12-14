@@ -96,7 +96,6 @@ public class LanguageModelClient {
         return jsonResponse.getString("response");
     }
 
-
     public List<String> listModels() throws IOException {
         // Anfrage senden
         String response = httpClient.getRequest("/api/tags");
@@ -108,7 +107,6 @@ public class LanguageModelClient {
                 .map(json -> json.getString("name")) // Name extrahieren
                 .toList();
     }
-
 
     public String generateResponseWithCustomOptions(String prompt, JSONObject options, boolean stream) throws IOException {
         JSONObject payload = new JSONObject();

@@ -1,7 +1,7 @@
 package Server;
 
-import Server.Handler.GenerateResponseNonStreamingHandler;
-import Server.Handler.PingHandler;
+import Server.Handler.*;
+
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
@@ -20,10 +20,13 @@ public class RestApiServer {
     }
 
     // Endpoints definieren
+
     private void configureEndpoints() {
         createContext("/ping", new PingHandler());
         createContext("/generateResponseNonStreaming", new GenerateResponseNonStreamingHandler());
+        createContext("/listModels", new ListModelsHandler());
     }
+
 
     private void createContext(String endpoint, HttpHandler handler) {
         server.createContext("/llm/api" +endpoint, handler);
