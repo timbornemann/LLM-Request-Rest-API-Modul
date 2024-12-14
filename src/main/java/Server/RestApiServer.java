@@ -25,11 +25,15 @@ public class RestApiServer {
         createContext("/ping", new PingHandler());
         createContext("/generateResponseNonStreaming", new GenerateResponseNonStreamingHandler());
         createContext("/listModels", new ListModelsHandler());
+        createContext("/listRunningModels", new ListRunningModelsHandler());
+        createContext("/loadModel", new LoadModelHandler());
+        createContext("/setServerUrl", new SetServerUrlHandler());
+        createContext("/generateResponseStreaming", new GenerateResponseStreamingHandler());
     }
 
 
     private void createContext(String endpoint, HttpHandler handler) {
-        server.createContext("/llm/api" +endpoint, handler);
+        server.createContext("/api" +endpoint, handler);
     }
 
     // Server starten
