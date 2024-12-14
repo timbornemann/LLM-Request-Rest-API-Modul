@@ -5,14 +5,17 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) {
 
-      //  LlmClient.LanguageModelClient client = new LlmClient.LanguageModelClient();
+       // LlmClient.LanguageModelClient client = new LlmClient.LanguageModelClient();
+
+
         try {
             RestApiServer server = new RestApiServer();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-/*
 
+
+/*
         //list models
         try {
          for(String e : client.listModels()){
