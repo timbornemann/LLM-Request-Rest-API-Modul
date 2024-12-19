@@ -14,7 +14,7 @@ public class RestApiServer {
 
     // Konstruktor: Server konfigurieren
     public RestApiServer() throws IOException {
-        server = HttpServer.create(new InetSocketAddress("localhost", 9191), 0);
+        server = HttpServer.create(new InetSocketAddress("0.0.0.0", 9191), 0);
         configureEndpoints();
         start();
     }
