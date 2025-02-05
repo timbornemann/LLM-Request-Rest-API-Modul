@@ -67,7 +67,6 @@ public class LanguageModelClient {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public String generateResponseNonStreaming(String prompt) throws IOException {

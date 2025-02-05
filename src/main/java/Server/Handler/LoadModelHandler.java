@@ -1,37 +1,59 @@
 package Server.Handler;
 
-import LlmClient.LanguageModelClient;
-import LlmClient.LanguageModelClient.Model;
+import LLM.LocalClient.Ollama;
+import LLM.LocalClient.Ollama.Model;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
-public class LoadModelHandler implements HttpHandler {
+/**
+ * The {@code LoadModelHandler} class handles HTTP POST requests to load a specified
+ * model into the {@link Ollama} client.
+ * <p>
+ * This handler extends {@link ResponseSender} to simplify sending JSON responses.
+ */
+public class LoadModelHandler extends ResponseSender implements HttpHandler {
 
-    private final LanguageModelClient languageModelClient;
+    /**
+     * Instance of the {@link Ollama} client for interacting with local models.
+     */
+    private final Ollama ollama;
 
+    /**
+     * Constructs a new {@code LoadModelHandler} and initializes the {@link Ollama} client.
+     */
     public LoadModelHandler() {
-        this.languageModelClient = new LanguageModelClient();
+        this.ollama = new Ollama();
     }
 
+    /**
+     * Handles incoming HTTP POST requests to load a specific model.
+     * <p>
+     * The request body should contain a JSON object with a "modelName" field specifying
+     * the name of the model to load. If the model is valid and successfully loaded, a
+     * success response is returned. Otherwise, appropriate error responses are sent.
+     *
+     * @param exchange the {@link HttpExchange} object for the HTTP request and response.
+     * @throws IOException if an error occurs while processing the request or response.
+     */
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        // Check if the request method is POST
         if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
             exchange.sendResponseHeaders(405, -1); // Method Not Allowed
             return;
         }
 
-        // Anfragekörper lesen
+        // Read the request body
         InputStream requestBody = exchange.getRequestBody();
         String requestBodyString = new String(requestBody.readAllBytes(), StandardCharsets.UTF_8);
 
         try {
-            // JSON-Payload parsen
+            // Parse the JSON payload
             JSONObject requestJson = new JSONObject(requestBodyString);
             if (!requestJson.has("modelName")) {
                 throw new IllegalArgumentException("Das Feld 'modelName' ist erforderlich.");
@@ -39,16 +61,16 @@ public class LoadModelHandler implements HttpHandler {
 
             String modelName = requestJson.getString("modelName");
 
-            // Modell im Enum finden
+            // Find the model in the enum
             Model modelToLoad = getModelFromName(modelName);
             if (modelToLoad == null) {
                 throw new IllegalArgumentException("Ungültiger Modellname: " + modelName);
             }
 
-            // Modell laden
-            boolean isLoaded = languageModelClient.loadModel(modelToLoad);
+            // Load the model
+            boolean isLoaded = ollama.loadModel(modelToLoad);
 
-            // Erfolgsantwort senden
+            // Send success response
             JSONObject responseJson = new JSONObject();
             responseJson.put("modelName", modelToLoad.getModelName());
             responseJson.put("loaded", isLoaded);
@@ -56,32 +78,30 @@ public class LoadModelHandler implements HttpHandler {
             sendResponse(exchange, responseJson.toString(), 200);
 
         } catch (IllegalArgumentException e) {
-            // Fehlerhafte Anfrage
+            // Handle bad request
             JSONObject errorResponse = new JSONObject();
             errorResponse.put("error", e.getMessage());
             sendResponse(exchange, errorResponse.toString(), 400);
         } catch (IOException e) {
-            // Serverseitiger Fehler
+            // Handle server-side errors
             JSONObject errorResponse = new JSONObject();
             errorResponse.put("error", "Fehler beim Laden des Modells: " + e.getMessage());
             sendResponse(exchange, errorResponse.toString(), 500);
         }
     }
 
+    /**
+     * Retrieves the {@link Model} instance corresponding to the given model name.
+     *
+     * @param modelName the name of the model to retrieve.
+     * @return the {@link Model} instance if found, or {@code null} if not found.
+     */
     private Model getModelFromName(String modelName) {
         for (Model model : Model.values()) {
             if (model.getModelName().equalsIgnoreCase(modelName)) {
                 return model;
             }
         }
-        return null; // Modell nicht im Enum gefunden
-    }
-
-    private void sendResponse(HttpExchange exchange, String response, int statusCode) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(statusCode, response.getBytes(StandardCharsets.UTF_8).length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes(StandardCharsets.UTF_8));
-        }
+        return null; // Model not found in the enum
     }
 }
